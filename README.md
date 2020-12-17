@@ -109,10 +109,23 @@ python main.py
 选项说明
 
 * 工作目录：执行命令时所在的工作目录。
-* 命令：执行的命令。如果需要执行多条命令，请用`&&`连接，如：
+* 命令：执行的命令。支持多行命令，如：
 
 ```shell
-source venv/pytorch/bin/activate && python train.py
+source venv/pytorch/bin/activate
+python train.py
+```
+
+注意：使用conda环境时，由于ssh远程执行无法获取conda环境变量导致`conda activate`失败，需要先激活conda再激活虚拟环境。或者使用`python`绝对路径。例如：
+
+```shell
+source /path/to/anaconda3/bin/activate
+conda activate pytorch
+python train.py
+
+# 或
+
+/path/to/anaconda3/envs/pytorch/bin/python train.py
 ```
 
 * GPU数量需求：任务所需的GPU数量。当任务被调度时，会根据所需GPU数量自动设置`CUDA_VISIBLE_DEVICES`环境变量，因此任务命令中不要手动设置`CUDA_VISIBLE_DEVICES`，避免调度失败。
@@ -128,6 +141,76 @@ source venv/pytorch/bin/activate && python train.py
 * 状态：当前任务状态。状态为`准备就绪`时，任务会被调度。
 
 任务运行后可以通过`GPU任务运行记录`查看任务状态与Log。
+
+## 通知设置
+
+GPUTasker支持邮件通知，任务开始运行和结束时向用户发送邮件提醒。
+
+### 开启邮箱SMTP功能
+
+进入邮箱后台，开启SMTP功能，并获取SMTP密钥。不同邮件服务商配置方式不同，具体开启方法参考邮箱帮助。
+
+### 配置邮件通知
+
+复制`email_settings_sample.py`为`email_settings.py`。
+
+```shell
+cd gpu_tasker
+cp email_settings_sample.py email_settings.py
+```
+
+编辑`email_settings.py`，填写SMTP服务器、端口、邮箱名和密码：
+
+```python
+# 以163邮箱为例
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# SMTP服务器
+EMAIL_HOST = 'smtp.163.com'
+# SMTP服务器端口
+EMAIL_PORT = 465
+
+# 邮箱名
+EMAIL_HOST_USER = 'xxx@163.com'
+# SMTP密钥（部分邮箱与邮箱密码相同）
+EMAIL_HOST_PASSWORD = 'xxx'
+
+EMAIL_USE_SSL = True
+EMAIL_USE_LOCALTIME = True
+DEFAULT_FROM_EMAIL = 'GPUTasker<{}>'.format(EMAIL_HOST_USER)
+SERVER_EMAIL = EMAIL_HOST_USER
+```
+
+### 配置收信邮箱
+
+收信邮箱为Django用户`电子邮件地址`，在后台进行配置。
+
+![user_email](.assets/user_email.png)
+
+## 更新GPUTasker
+
+GPUTasker可能包含数据表的改动，更新后请务必更新数据表以及**重新启动main.py**。
+
+```shell
+# 拉取最新代码
+git pull
+
+# 更新数据表
+python manage.py makemigrations
+python manage.py migrate
+
+# 重新启动main.py
+# 1. CTRL + C结束main.py
+# 2. 重新启动
+python main.py
+```
+
+## QQ交流群
+
+* 群号：634800826
+
+![qq group](.assets/qrcode_qq.jpg)
+
 
 ## 写在后面
 
